@@ -1,4 +1,6 @@
 streamlit
 pandas
-plotly
 influxdb-client
+plotly
+statsmodels
+scipy
