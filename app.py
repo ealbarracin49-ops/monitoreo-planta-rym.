@@ -1,43 +1,178 @@
 import streamlit as st
 import pandas as pd
 from influxdb_client import InfluxDBClient
+import plotly.express as px
 
-TOKEN = "DkpL6zznGwMgO5RwAhPXj2ZbZ3w2qsvWVTWotXivS3KKRZe56F5XsywwnK7l3_76FWpj2ZVWOeN1RQVlTydEWQ=="
-ORG = "miguelcmo"
+ 
+
+# =========================
+# CONFIGURACIÓN INFLUXDB
+# =========================
+
+ 
+
 URL = "https://us-east-1-1.aws.cloud2.influxdata.com"
+TOKEN = "EJwrNIOrygCc52EJm-H0NVuHwUapDRTUdEiJ4rCwz3H_cwi_APdfpViMMc9bmzfzcfg9dub8uibJw0fpekAIVQ=="
+ORG = "miguelcmo"
 BUCKET = "iot_telemetry_data"
 
-client = InfluxDBClient(
-    url=URL,
-    token=TOKEN,
-    org=ORG
+ 
+
+# =========================
+# STREAMLIT PAGE
+# =========================
+
+ 
+
+st.set_page_config(
+    page_title="IoT Dashboard",
+    layout="wide"
 )
+
+ 
+
+st.title("📡 IoT Telemetry Dashboard")
+
+ 
+
+# =========================
+# CONEXIÓN
+# =========================
+
+ 
+
+client = InfluxDBClient(
+    url=URL,
+    token=TOKEN,
+    org=ORG
+)
+
+ 
 
 query_api = client.query_api()
 
-st.title("Debug InfluxDB")
+ 
+
+# =========================
+# QUERY FLUX
+# =========================
+
+ 
 
 query = f'''
 from(bucket: "{BUCKET}")
-  |> range(start: -30d)
+  |> range(start: -1h)
 '''
 
+ 
+
+# =========================
+# CONSULTAR DATOS
+# =========================
+
+ 
+
 try:
-    df = query_api.query_data_frame(query)
+    tables = query_api.query_data_frame(query)
 
-    if isinstance(df, list):
-        df = pd.concat(df)
+ 
 
-    st.write("Datos encontrados:")
-    st.dataframe(df)
+    if isinstance(tables, list):
+        df = pd.concat(tables)
+    else:
+        df = tables
 
-    st.write("Measurements:")
-    st.write(df["_measurement"].unique())
+ 
 
-    st.write("Fields:")
-    st.write(df["_field"].unique())
+    if df.empty:
+        st.warning("No hay datos disponibles.")
+    else:
+
+ 
+
+        # LIMPIEZA
+        columns_to_remove = [
+            "result",
+            "table",
+            "_start",
+            "_stop"
+        ]
+
+ 
+
+        for col in columns_to_remove:
+            if col in df.columns:
+                df = df.drop(columns=[col])
+
+ 
+
+        st.subheader("Datos Recientes")
+
+ 
+
+        st.dataframe(df, use_container_width=True)
+
+ 
+
+        # =========================
+        # GRÁFICAS
+        # =========================
+
+ 
+
+        if "_time" in df.columns and "_value" in df.columns:
+
+ 
+
+            fig = px.line(
+                df,
+                x="_time",
+                y="_value",
+                color="_field" if "_field" in df.columns else None,
+                title="Telemetría en Tiempo Real"
+            )
+
+ 
+
+            st.plotly_chart(fig, use_container_width=True)
+
+ 
+
+        # =========================
+        # MÉTRICAS
+        # =========================
+
+ 
+
+        col1, col2, col3 = st.columns(3)
+
+ 
+
+        with col1:
+            st.metric(
+                "Total Registros",
+                len(df)
+            )
+
+ 
+
+        if "_measurement" in df.columns:
+            with col2:
+                st.metric(
+                    "Measurements",
+                    df["_measurement"].nunique()
+                )
+
+ 
+
+        if "_field" in df.columns:
+            with col3:
+                st.metric(
+                    "Fields",
+                    df["_field"].nunique()
+                )
+
+ 
 
 except Exception as e:
-    st.error(str(e))
-
-client.close()
+    st.error(f"Error conectando a InfluxDB: {e}")
