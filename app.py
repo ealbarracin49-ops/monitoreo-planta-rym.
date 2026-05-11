@@ -83,7 +83,7 @@ try:
             st.info("💡 Esta gráfica ayuda a predecir fallos mecánicos por exceso de calor.")
 
 
-         st.subheader("correlacion : Vibración en z vs Temperatura")
+        st.subheader("correlacion : Vibración en z vs Temperatura")
         df_pivot = df[df["_field"].isin(["temperature", "accel_z"])].pivot(
             index="_time", columns="_field", values="_value"
         ).dropna()
