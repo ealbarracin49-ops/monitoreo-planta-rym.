@@ -59,6 +59,7 @@ try:
 
         # NUEVA GRÁFICA DE CORRELACIÓN (PEDIDO DEL PROFE)
         st.subheader("🔍 Análisis de Causa-Raíz: Vibración vs Temperatura")
+        st.subheader("correlacion: Vibración en x vs Temperatura")
         df_pivot = df[df["_field"].isin(["temperature", "accel_x"])].pivot(
             index="_time", columns="_field", values="_value"
         ).dropna()
@@ -66,6 +67,18 @@ try:
         if not df_pivot.empty:
             fig_scatter = px.scatter(df_pivot, x="temperature", y="accel_x", trendline="ols", 
                                    title="Relación Calor-Vibración", labels={"temperature": "Temp (°C)", "accel_x": "Vibración X"})
+            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.info("💡 Esta gráfica ayuda a predecir fallos mecánicos por exceso de calor.")
+
+
+        st.subheader("correlacion : Vibración en y vs Temperatura")
+        df_pivot = df[df["_field"].isin(["temperature", "accel_y"])].pivot(
+            index="_time", columns="_field", values="_value"
+        ).dropna()
+
+        if not df_pivot.empty:
+            fig_scatter = px.scatter(df_pivot, x="temperature", y="accel_y", trendline="ols", 
+                                   title="Relación Calor-Vibración", labels={"temperature": "Temp (°C)", "accel_y": "Vibración y"})
             st.plotly_chart(fig_scatter, use_container_width=True)
             st.info("💡 Esta gráfica ayuda a predecir fallos mecánicos por exceso de calor.")
 
