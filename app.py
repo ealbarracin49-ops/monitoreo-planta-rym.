@@ -120,7 +120,7 @@ def get_data(query):
 # Consulta para traer temperatura
 query_temperature = f'''
 from(bucket: "{BUCKET}")
-  |> range(start: -1h)
+  |> range(start: -10d)
   |> filter(fn: (r) => r._measurement == "environment")
   |> filter(fn: (r) => r._field == "temperature")
 '''
