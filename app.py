@@ -27,11 +27,19 @@ def get_data(query):
         return None
 
 # 3. Consultas Flux (Basadas en los ejemplos de tus imágenes 3, 4 y 5)
+# query_environment = f'''
+# from(bucket: "{BUCKET}")
+#   |> range(start: -1h)
+#   |> filter(fn: (r) => r._measurement == "environment")
+#   |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+# '''
+
 query_environment = f'''
-from(bucket: "{BUCKET}")
+from(bucket: "iot_telemetry_data")
   |> range(start: -1h)
   |> filter(fn: (r) => r._measurement == "environment")
-  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+  |> filter(fn: (r) => r._field == "temperature")
+  |> mean()
 '''
 
 query_vibration = f'''
