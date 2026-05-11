@@ -251,3 +251,30 @@ try:
 
 except Exception as e:
     st.error(f"Error conectando a InfluxDB: {e}")
+# ==========================================
+        # NUEVA GRÁFICA: RELACIÓN VIBRACIÓN VS TEMP
+        # ==========================================
+        st.subheader("🔍 Análisis de Correlación: Vibración vs Temperatura")
+        
+        # Filtramos y pivotamos los datos para poder comparar columnas
+        df_pivot = df[df["_field"].isin(["temperature", "accel_x"])].pivot(
+            index="_time", 
+            columns="_field", 
+            values="_value"
+        ).dropna()
+
+        if not df_pivot.empty:
+            fig_scatter = px.scatter(
+                df_pivot,
+                x="temperature", 
+                y="accel_x",
+                trendline="ols", # Línea de tendencia estadística
+                title="¿Afecta la Temperatura a la Vibración del Motor?",
+                labels={"temperature": "Temperatura (°C)", "accel_x": "Vibración Eje X (g)"},
+                color_discrete_sequence=['#ff4b4b']
+            )
+            
+            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.info("💡 Esta gráfica permite identificar si el aumento de temperatura genera inestabilidad mecánica en la planta.")
+        else:
+            st.warning("No hay suficientes datos para el análisis de correlación.")
